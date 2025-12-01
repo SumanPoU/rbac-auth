@@ -24,19 +24,42 @@ export default function ResetPage() {
 function ResetPasswordPage() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
-  const email = searchParams.get("email");
-  const router = useRouter();
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    if (!token || !email) {
-      setError("Invalid or missing reset link parameters");
-    }
-  }, [token, email]);
+    const verifyToken = async () => {
+      if (!token) {
+        setError("Invalid or missing reset link");
+        setIsVerifying(false);
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/auth/verify-reset-token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token }),
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          toast.error(data.message || "Invalid reset link");
+        }
+      } catch (err) {
+        toast.error("Failed to verify reset link");
+      } finally {
+        setIsVerifying(false);
+      }
+    };
+
+    verifyToken();
+  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,25 +87,40 @@ function ResetPasswordPage() {
       const response = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, email, password, confirmPassword }),
+        body: JSON.stringify({ token, password, confirmPassword }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        toast.error(data.message || "Failed to reset password");
+        setError(data.message || "Failed to reset password");
         return;
       }
 
-      toast.success("Password reset successfully");
       setSuccess(true);
-      router.push("/login");
     } catch (err) {
-      toast.error("An error occurred. Please try again.");
+      setError("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (isVerifying) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+        <Card className="w-full max-w-md p-8 border border-border">
+          <div className="text-center space-y-4">
+            <div className="w-12 h-12 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
+              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Verifying reset link...
+            </p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   if (success) {
     return (
@@ -120,7 +158,7 @@ function ResetPasswordPage() {
     );
   }
 
-  if (!token || !email) {
+  if (!token || error) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-background">
         <Card className="w-full max-w-md p-8 border border-border">
@@ -144,8 +182,8 @@ function ResetPasswordPage() {
               Invalid reset link
             </h2>
             <p className="text-sm text-muted-foreground">
-              The reset link is invalid or has expired. Please request a new
-              one.
+              {error ||
+                "The reset link is invalid or has expired. Please request a new one."}
             </p>
             <Link href="/forgot-password">
               <Button className="w-full">Request new link</Button>

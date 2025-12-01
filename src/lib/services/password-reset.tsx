@@ -6,9 +6,8 @@ export async function sendPasswordResetEmail(
   name: string
 ) {
   try {
-    const resetUrl = `${
-      process.env.NEXTAUTH_URL
-    }/reset-password?token=${token}&email=${encodeURIComponent(email)}`;
+    // Only token in URL, no email exposed
+    const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`;
 
     const mailOptions = {
       from: process.env.EMAIL_FROM,
@@ -22,8 +21,6 @@ export async function sendPasswordResetEmail(
           <a href="${resetUrl}" style="display: inline-block; background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin: 20px 0;">
             Reset Password
           </a>
-          <p>Or copy and paste this link in your browser:</p>
-          <p style="word-break: break-all; color: #666;">${resetUrl}</p>
           <p style="color: #999; font-size: 12px;">This link expires in 1 hour. If you didn't request this, please ignore this email.</p>
         </div>
       `,

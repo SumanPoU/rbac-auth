@@ -62,16 +62,17 @@ export const authOptions: NextAuthOptions = {
           where: { email: credentials.email },
         });
 
-        if (!user || !user.password) {
+        // Email not found
+        if (!user) {
           throw new Error(
             JSON.stringify({
               success: false,
-              message: "Invalid email or password",
+              message: "Email is invalid",
             })
           );
         }
 
-        // Check if email is verified
+        // Email not verified
         if (!user.emailVerified) {
           throw new Error(
             JSON.stringify({
@@ -83,12 +84,22 @@ export const authOptions: NextAuthOptions = {
           );
         }
 
+        // Ensure password is not null
+        if (!user.password) {
+          throw new Error(
+            JSON.stringify({
+              success: false,
+              message: "Password not set for this account",
+            })
+          );
+        }
+
         const isValid = await compare(credentials.password, user.password);
         if (!isValid) {
           throw new Error(
             JSON.stringify({
               success: false,
-              message: "Invalid email or password",
+              message: "Password is incorrect",
             })
           );
         }

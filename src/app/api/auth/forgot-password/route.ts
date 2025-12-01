@@ -28,6 +28,17 @@ export async function POST(req: Request) {
       );
     }
 
+    if (!user.password) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Password reset is only available for accounts registered via email and password.",
+        },
+        { status: 400 }
+      );
+    }
+
     // Delete old tokens for this email
     await db.verificationToken.deleteMany({
       where: { identifier: email.toLowerCase() },

@@ -6,7 +6,6 @@ import { z } from "zod";
 const ResetPasswordSchema = z
   .object({
     token: z.string().min(1),
-    email: z.string().email(),
     password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string().min(6),
   })
@@ -18,26 +17,22 @@ const ResetPasswordSchema = z
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { token, email, password, confirmPassword } =
+    const { token, password, confirmPassword } =
       ResetPasswordSchema.parse(body);
 
-    // Verify token
+    // Verify token and get email from database
     const verificationToken = await db.verificationToken.findUnique({
       where: { token },
     });
 
-    if (
-      !verificationToken ||
-      verificationToken.identifier !== email.toLowerCase()
-    ) {
+    if (!verificationToken) {
       return NextResponse.json(
-        { message: "Invalid or expired reset link" },
+        { message: "Invalid reset link" },
         { status: 400 }
       );
     }
 
     if (new Date() > verificationToken.expires) {
-      // Delete expired token
       await db.verificationToken.delete({ where: { token } });
       return NextResponse.json(
         { message: "Reset link has expired" },
@@ -45,9 +40,12 @@ export async function POST(req: Request) {
       );
     }
 
+    // Get email from database (not from client)
+    const email = verificationToken.identifier;
+
     // Find user
     const user = await db.user.findUnique({
-      where: { email: email.toLowerCase() },
+      where: { email },
     });
 
     if (!user) {
