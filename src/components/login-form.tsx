@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { PasswordInput } from "@/components/ui/password-input";
 import toast from "react-hot-toast";
+import Link from "next/link";
 
 export function LoginForm() {
   const router = useRouter();
@@ -211,13 +212,22 @@ export function LoginForm() {
             required
             disabled={isLoading}
           />
-          <PasswordInput
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            disabled={isLoading}
-          />
+          <div className="flex flex-col">
+            <PasswordInput
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={isLoading}
+            />
+
+            <Link
+              href="/forgot-password"
+              className="text-sm text-muted-foreground mt-2 ml-auto hover:underline transition-all duration-200"
+            >
+              Forgot your password?
+            </Link>
+          </div>
         </div>
 
         <Button

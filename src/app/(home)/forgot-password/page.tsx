@@ -34,7 +34,10 @@ export default function ForgotPasswordPage() {
         return;
       }
 
-      toast.success("Check your email for a reset link");
+      toast.success(data.message || "Success");
+      setSuccess(true);
+      setEmail("");
+
       setSuccess(true);
       setEmail("");
     } catch (err) {
