@@ -60,6 +60,7 @@ export const authOptions: NextAuthOptions = {
 
         const user = await db.user.findUnique({
           where: { email: credentials.email },
+          include: { role: true },
         });
 
         // Email not found
@@ -108,7 +109,7 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role,
+          role: user.role?.name ?? "READ_ONLY",
         };
       },
     }),
@@ -136,7 +137,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id.toString();
-        token.role = (user as any).role;
+        token.role = user.role;
       }
       return token;
     },
