@@ -1,0 +1,101 @@
+{
+  "roles": [
+    {
+      "id": 1,
+      "name": "READ_ONLY",
+      "description": "Users with this role can only view application content.",
+      "isDefault": true
+    },
+    {
+      "id": 2,
+      "name": "ADMIN",
+      "description": "Users with this role have administrative privileges.",
+      "isDefault": false
+    },
+    {
+      "id": 3,
+      "name": "SUPER_ADMIN",
+      "description": "Users with this role have full access and control over the application.",
+      "isDefault": false
+    }
+  ],
+  "permissions": [
+    {
+      "id": 1,
+      "name": "user:read",
+      "description": "Can read user information"
+    },
+    { "id": 2, "name": "user:write", "description": "Can create/update users" },
+    { "id": 3, "name": "user:delete", "description": "Can delete users" },
+    {
+      "id": 4,
+      "name": "role:manage",
+      "description": "Can manage roles and permissions"
+    },
+    {
+      "id": 5,
+      "name": "admin:access",
+      "description": "Can access admin-specific features"
+    }
+  ],
+  "rolePermissions": [
+    { "roleId": 3, "permissionId": 1 },
+    { "roleId": 3, "permissionId": 2 },
+    { "roleId": 3, "permissionId": 3 },
+    { "roleId": 3, "permissionId": 4 },
+    { "roleId": 3, "permissionId": 5 },
+    { "roleId": 2, "permissionId": 1 },
+    { "roleId": 2, "permissionId": 2 },
+    { "roleId": 2, "permissionId": 5 },
+    { "roleId": 1, "permissionId": 1 }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "name": "Super Admin",
+      "username": "superadmin",
+      "email": "acharyas186@gmail.com",
+      "password": "$2a$10$HASHED_ADMIN123",
+      "roleId": 3
+    },
+    {
+      "id": 2,
+      "name": "Admin User",
+      "username": "adminuser",
+      "email": "sumanacharyas186@gmail.com",
+      "password": "$2a$10$HASHED_ADMIN123",
+      "roleId": 2
+    },
+    {
+      "id": 3,
+      "name": "Read Only User",
+      "username": "readonlyuser",
+      "email": "suman9815029324@gmail.com",
+      "password": "$2a$10$HASHED_USER123",
+      "roleId": 1
+    }
+  ],
+  "pages": [
+    {
+      "id": 1,
+      "title": "Dashboard",
+      "slug": "dashboard",
+      "staticText": "Welcome to the Dashboard",
+      "allowedRoles": [1, 2, 3]
+    },
+    {
+      "id": 2,
+      "title": "Admin Panel",
+      "slug": "admin-panel",
+      "staticText": "Admin functionalities",
+      "allowedRoles": [2, 3]
+    },
+    {
+      "id": 3,
+      "title": "Role Management",
+      "slug": "role-management",
+      "staticText": "Manage user roles and permissions",
+      "allowedRoles": [3]
+    }
+  ]
+}

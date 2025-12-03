@@ -159,7 +159,20 @@ export const authOptions: NextAuthOptions = {
           data: { emailVerified: new Date() },
         });
       }
+
+      // Assign default role if user has no role
+      const defaultRole = await db.role.findFirst({
+        where: { isDefault: true },
+      });
+
+      if (defaultRole) {
+        await db.user.update({
+          where: { id: user.id },
+          data: { roleId: defaultRole.id },
+        });
+      }
     },
   },
+
   secret: process.env.NEXTAUTH_SECRET,
 };

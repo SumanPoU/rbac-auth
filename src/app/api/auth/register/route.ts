@@ -30,18 +30,25 @@ export async function POST(req: Request) {
 
     const hashedPassword = await hash(password, 12);
 
-    // Create user
+    // Find default role
+    const defaultRole = await db.role.findFirst({
+      where: { isDefault: true },
+    });
+
+    // Create user with default role
     const user = await db.user.create({
       data: {
         name,
         email: email.toLowerCase(),
         password: hashedPassword,
+        roleId: defaultRole?.id,
       },
       select: {
         id: true,
         name: true,
         email: true,
         emailVerified: true,
+        roleId: true,
       },
     });
 
