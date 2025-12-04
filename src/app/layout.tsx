@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Playfair_Display, Jost } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
+import { Analytics } from "@vercel/analytics/react";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -31,7 +33,8 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${playfair.variable} ${jost.variable} antialiased`}>
         <Toaster position="top-right" reverseOrder={false} />
-        {children}
+        <ErrorBoundary>{children}</ErrorBoundary>
+        <Analytics />
       </body>
     </html>
   );

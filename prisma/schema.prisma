@@ -15,14 +15,19 @@ model User {
   emailVerified DateTime?
   password      String?
   image         String?
+  isDisabled    Boolean   @default(false)
+
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
 
   roleId Int?
   role   Role? @relation(fields: [roleId], references: [id])
 
   accounts  Account[]
   sessions  Session[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  auditLogs AuditLog[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model Account {
@@ -105,4 +110,22 @@ model Page {
   allowedRoles Role[] @relation("PageAllowedRoles")
 
   @@map("pages")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  timestamp DateTime @default(now())
+  action    String
+  resource  String
+  details   Json
+  ipAddress String?
+  userAgent String?
+
+  userId Int?
+  user   User? @relation(fields: [userId], references: [id])
+
+  @@index([timestamp])
+  @@index([userId])
+  @@index([action])
+  @@map("audit_logs")
 }

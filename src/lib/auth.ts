@@ -63,12 +63,32 @@ export const authOptions: NextAuthOptions = {
           include: { role: true },
         });
 
-        // Email not found
+        // Email not found or deleted
         if (!user) {
           throw new Error(
             JSON.stringify({
               success: false,
-              message: "Email is invalid",
+              message: "Email is invalid or account does not exist",
+            })
+          );
+        }
+
+        // Check if account is disabled
+        if (user.isDisabled) {
+          throw new Error(
+            JSON.stringify({
+              success: false,
+              message: "This account has been disabled. Contact support.",
+            })
+          );
+        }
+
+        //  soft deleted
+        if (user.isDeleted) {
+          throw new Error(
+            JSON.stringify({
+              success: false,
+              message: "This account has been deleted. Contact support.",
             })
           );
         }
@@ -85,7 +105,7 @@ export const authOptions: NextAuthOptions = {
           );
         }
 
-        // Ensure password is not null
+        // Ensure password is set
         if (!user.password) {
           throw new Error(
             JSON.stringify({
@@ -123,11 +143,18 @@ export const authOptions: NextAuthOptions = {
           where: { email: user.email },
         });
 
-        if (existing && !existing.emailVerified) {
-          await db.user.update({
-            where: { id: existing.id },
-            data: { emailVerified: new Date() },
-          });
+        if (existing) {
+          if (existing.isDisabled || existing.isDeleted) {
+            return false;
+          }
+
+          // If email is not verified, set it to verified
+          if (!existing.emailVerified) {
+            await db.user.update({
+              where: { id: existing.id },
+              data: { emailVerified: new Date() },
+            });
+          }
         }
       }
 
