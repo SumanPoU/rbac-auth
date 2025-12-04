@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { Analytics } from "@vercel/analytics/react";
 import { ErrorBoundary } from "@/components/error-boundary";
+import AuthProvider from "@/components/session-provider";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -32,9 +33,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${playfair.variable} ${jost.variable} antialiased`}>
-        <Toaster position="top-right" reverseOrder={false} />
-        <ErrorBoundary>{children}</ErrorBoundary>
-        <Analytics />
+        <AuthProvider>
+          <Toaster position="top-right" reverseOrder={false} />
+          <ErrorBoundary>{children}</ErrorBoundary>
+          <Analytics />
+        </AuthProvider>
       </body>
     </html>
   );

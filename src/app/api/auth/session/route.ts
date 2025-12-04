@@ -6,14 +6,17 @@ export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
 
   if (!session) {
-    return new NextResponse(
-      JSON.stringify({ status: "fail", message: "You are not logged in" }),
+    return NextResponse.json(
+      { status: false, message: "You are not logged in" },
       { status: 401 }
     );
   }
 
+  const user = (session as any).user || (session as any).session?.user || null;
+
   return NextResponse.json({
     authenticated: !!session,
-    session,
+    user,
+    rawSession: session,
   });
 }

@@ -2,25 +2,34 @@ import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { logAuditEvent, AuditActions } from "@/components/audit-logger";
-import logger from "@/components/logger";
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // Routes that require authentication
-  const protectedRoutes = ["/reset-password/verify", "/dashboard"];
+  // Authentication-protected routes
+  const authProtected = [
+    "/dashboard",
+    "/api/protected",
+    "/reset-password/verify",
+  ];
+
+  const requiresAuth = authProtected.some((route) =>
+    pathname.startsWith(route)
+  );
 
   const forwardedFor = request.headers.get("x-forwarded-for");
   const ipAddress = forwardedFor?.split(",")[0].trim() ?? "unknown";
   const userAgent = request.headers.get("user-agent") ?? "unknown";
 
-  if (protectedRoutes.some((route) => pathname.startsWith(route))) {
+  //  Require token for protected paths
+  if (requiresAuth) {
     const token = await getToken({
       req: request,
       secret: process.env.NEXTAUTH_SECRET,
     });
 
     if (!token) {
+      // Log failed authentication
       await logAuditEvent({
         action: AuditActions.FAILED_LOGIN,
         resource: "middleware-auth-check",
@@ -32,6 +41,7 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
 
+    // Log successful authentication
     await logAuditEvent({
       action: AuditActions.VIEW,
       resource: pathname,
@@ -46,5 +56,9 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/reset-password/verify/:path*", "/dashboard/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/api/protected/:path*",
+    "/reset-password/verify/:path*",
+  ],
 };
