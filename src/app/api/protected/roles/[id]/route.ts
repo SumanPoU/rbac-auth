@@ -47,27 +47,43 @@ export async function PUT(
   if (!allowed) return response!;
 
   const body = await req.json();
-  const { name, description } = body;
+  const { name, description, isDefault } = body;
 
-  const role = await db.role.update({
-    where: { id: roleId },
-    data: {
-      name,
-      description,
-    },
-    select: {
-      id: true,
-      name: true,
-      description: true,
-      createdAt: true,
-      updatedAt: true,
-    },
+  // Start a transaction to ensure atomic updates
+  const updatedRole = await db.$transaction(async (tx) => {
+    if (isDefault) {
+      // Reset all other roles to not default
+      await tx.role.updateMany({
+        where: { id: { not: roleId } },
+        data: { isDefault: false },
+      });
+    }
+
+    // Update the current role
+    const role = await tx.role.update({
+      where: { id: roleId },
+      data: {
+        name,
+        description,
+        ...(isDefault !== undefined ? { isDefault } : {}),
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        isDefault: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return role;
   });
 
   return NextResponse.json({
     success: true,
     message: "Role updated successfully",
-    data: role,
+    data: updatedRole,
   });
 }
 

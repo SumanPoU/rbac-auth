@@ -96,16 +96,6 @@ export function getMenuList(pathname: string): Group[] {
               label: "Add Role",
               permission: "add:roles",
             },
-            {
-              href: "/dashboard/roles/update",
-              label: "Update Role",
-              permission: "update:roles",
-            },
-            {
-              href: "/dashboard/roles/delete",
-              label: "Delete Role",
-              permission: "delete:roles",
-            },
           ],
         },
         {
