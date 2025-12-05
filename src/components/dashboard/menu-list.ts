@@ -113,16 +113,6 @@ export function getMenuList(pathname: string): Group[] {
               label: "Add Page",
               permission: "add:pages",
             },
-            {
-              href: "/dashboard/pages/update",
-              label: "Update Page",
-              permission: "update:pages",
-            },
-            {
-              href: "/dashboard/pages/delete",
-              label: "Delete Page",
-              permission: "delete:pages",
-            },
           ],
         },
         {
