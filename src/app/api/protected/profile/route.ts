@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/prisma";
-import { success } from "zod";
+import bcrypt from "bcryptjs";
 
 export async function GET() {
   try {
@@ -25,12 +25,35 @@ export async function GET() {
         username: true,
         email: true,
         image: true,
+        password: true,
         createdAt: true,
         updatedAt: true,
+
         role: {
           select: {
             id: true,
             name: true,
+            description: true,
+            permissions: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+              },
+            },
+            pages: {
+              select: {
+                id: true,
+                title: true,
+                slug: true,
+                staticText: true,
+              },
+            },
+          },
+        },
+        accounts: {
+          select: {
+            provider: true,
           },
         },
       },
@@ -43,10 +66,19 @@ export async function GET() {
       );
     }
 
+    // Determine credentials login
+    const isCredentials = !!user.password;
+
+    // remove password from response
+    const { password, ...safeUser } = user;
+
     return NextResponse.json({
       success: true,
       message: "Profile fetched successfully",
-      data: user,
+      data: {
+        ...safeUser,
+        isCredentials,
+      },
     });
   } catch (error) {
     console.error("PROFILE API ERROR:", error);
@@ -71,20 +103,42 @@ export async function PATCH(req: Request) {
     const userId = Number(session.user.id);
 
     const body = await req.json();
-    const { name, username, image } = body;
+    const { name, username, image, password } = body;
 
-    if (!name && !username && !image) {
+    if (!name && !username && !image && !password) {
       return NextResponse.json(
         { success: false, message: "Nothing to update" },
         { status: 400 }
       );
     }
 
-    // If updating username, check duplicate
+    // Fetch logged-in user + accounts
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      include: { accounts: true },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    // Check if the user logged in using Credentials provider
+    const isCredentialsUser =
+      user.password !== null ||
+      user.accounts.some((acc) => acc.provider === "credentials");
+
+    let dataToUpdate: any = {
+      name: name || undefined,
+      username: username || undefined,
+      image: image || undefined,
+    };
+
+    // Handle username duplicate checking
     if (username) {
-      const existing = await db.user.findUnique({
-        where: { username },
-      });
+      const existing = await db.user.findUnique({ where: { username } });
 
       if (existing && existing.id !== userId) {
         return NextResponse.json(
@@ -94,13 +148,25 @@ export async function PATCH(req: Request) {
       }
     }
 
+    // Only allow password update if user is credentials user
+    if (password) {
+      if (!isCredentialsUser) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Password cannot be updated for social login accounts",
+          },
+          { status: 400 }
+        );
+      }
+
+      const hashed = await bcrypt.hash(password, 12);
+      dataToUpdate.password = hashed;
+    }
+
     const updatedUser = await db.user.update({
       where: { id: userId },
-      data: {
-        name: name || undefined,
-        username: username || undefined,
-        image: image || undefined,
-      },
+      data: dataToUpdate,
       select: {
         id: true,
         name: true,
@@ -109,12 +175,7 @@ export async function PATCH(req: Request) {
         image: true,
         createdAt: true,
         updatedAt: true,
-        role: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+        role: { select: { id: true, name: true } },
       },
     });
 

@@ -20,6 +20,26 @@ export async function GET(
       description: true,
       createdAt: true,
       updatedAt: true,
+      pages: {
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+        },
+        orderBy: {
+          id: "asc",
+        },
+      },
+      permissions: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+        },
+        orderBy: {
+          id: "asc",
+        },
+      },
     },
   });
 

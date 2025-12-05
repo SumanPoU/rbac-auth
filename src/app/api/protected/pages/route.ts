@@ -10,11 +10,10 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
 
+  const type = searchParams.get("type");
   const page = Number(searchParams.get("page")) || 1;
   const limit = Number(searchParams.get("limit")) || 20;
   const search = searchParams.get("search") || "";
-
-  const skip = (page - 1) * limit;
 
   // Build search filter
   const where: Prisma.PageWhereInput = search
@@ -42,7 +41,35 @@ export async function GET(req: Request) {
       }
     : {};
 
-  // Fetch pages and total count
+  if (type === "all") {
+    const pages = await db.page.findMany({
+      where,
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        staticText: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: { id: "asc" },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "All pages fetched successfully",
+      data: pages,
+      meta: {
+        total: pages.length,
+        page: 1,
+        limit: pages.length,
+        totalPages: 1,
+      },
+    });
+  }
+
+  const skip = (page - 1) * limit;
+
   const [pages, total] = await Promise.all([
     db.page.findMany({
       where,

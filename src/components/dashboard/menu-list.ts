@@ -114,27 +114,5 @@ export function getMenuList(pathname: string): Group[] {
         },
       ],
     },
-    {
-      groupLabel: "Assignments",
-      menus: [
-        {
-          href: "/dashboard/assignments",
-          label: "Role & User Assignments",
-          icon: Users,
-          submenus: [
-            {
-              href: "/dashboard/assignments/roles-pages",
-              label: "Update Roles Pages",
-              permission: "update:roles-pages",
-            },
-            {
-              href: "/dashboard/assignments/roles-permissions",
-              label: "Update Roles Permissions",
-              permission: "update:roles-permissions",
-            },
-          ],
-        },
-      ],
-    },
   ];
 }

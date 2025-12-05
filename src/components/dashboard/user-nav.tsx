@@ -73,7 +73,7 @@ export function UserNav() {
           </DropdownMenuItem>
 
           <DropdownMenuItem asChild>
-            <Link href="/account" className="flex items-center">
+            <Link href="/dashboard/account" className="flex items-center">
               <User className="w-4 h-4 mr-3 text-muted-foreground" />
               Account
             </Link>

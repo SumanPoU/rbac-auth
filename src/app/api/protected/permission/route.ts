@@ -9,11 +9,10 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
 
+  const type = searchParams.get("type");
   const page = Number(searchParams.get("page")) || 1;
   const limit = Number(searchParams.get("limit")) || 20;
   const search = searchParams.get("search") || "";
-
-  const skip = (page - 1) * limit;
 
   const where: Prisma.PermissionWhereInput = search
     ? {
@@ -33,6 +32,35 @@ export async function GET(req: Request) {
         ],
       }
     : {};
+
+  if (type === "all") {
+    const permissions = await db.permission.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: { id: "asc" },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "All permissions fetched successfully",
+      data: permissions,
+      meta: {
+        total: permissions.length,
+        page: 1,
+        limit: permissions.length,
+        totalPages: 1,
+      },
+    });
+  }
+
+  // Normal paginated mode
+  const skip = (page - 1) * limit;
 
   const [permissions, total] = await Promise.all([
     db.permission.findMany({
