@@ -527,7 +527,7 @@ export function DynamicTable<T extends object>({
       </div>
 
       {/* Pagination */}
-      <div className="flex flex-col sm:flex-row items-center justify-between py-4 gap-2">
+      <div className="flex flex-col sm:flex-row items-center justify-between py-4">
         <div className="flex items-center gap-2 text-sm">
           <span>Rows per page:</span>
           <select

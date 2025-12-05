@@ -59,26 +59,6 @@ export function getMenuList(pathname: string): Group[] {
               label: "Add User",
               permission: "create:users",
             },
-            {
-              href: "/dashboard/users/update",
-              label: "Update User",
-              permission: "update:users",
-            },
-            {
-              href: "/dashboard/users/disable",
-              label: "Disable User",
-              permission: "disable:users",
-            },
-            {
-              href: "/dashboard/users/soft-delete",
-              label: "Soft Delete User",
-              permission: "soft-delete:users",
-            },
-            {
-              href: "/dashboard/users/hard-delete",
-              label: "Hard Delete User",
-              permission: "hard-delete:users",
-            },
           ],
         },
         {
@@ -142,11 +122,6 @@ export function getMenuList(pathname: string): Group[] {
           label: "Role & User Assignments",
           icon: Users,
           submenus: [
-            {
-              href: "/dashboard/assignments/user-role",
-              label: "Update User Role",
-              permission: "update:users-role",
-            },
             {
               href: "/dashboard/assignments/roles-pages",
               label: "Update Roles Pages",

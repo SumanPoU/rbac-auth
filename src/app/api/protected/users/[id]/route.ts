@@ -20,7 +20,34 @@ export async function GET(
       username: true,
       email: true,
       image: true,
-      role: true,
+      isDisabled: true,
+      isDeleted: true,
+      deletedAt: true,
+      createdAt: true,
+      updatedAt: true,
+      role: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          isDefault: true,
+          permissions: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+            },
+          },
+          pages: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              staticText: true,
+            },
+          },
+        },
+      },
     },
   });
 
