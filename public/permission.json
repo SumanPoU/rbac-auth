@@ -1,0 +1,31 @@
+[
+  { "name": "read:users", "description": "Read users" },
+  { "name": "read:users-details", "description": "Read user details" },
+  { "name": "create:users", "description": "Create users" },
+  { "name": "update:users", "description": "Update users" },
+  { "name": "disable:users", "description": "Disable users" },
+  { "name": "soft-delete:users", "description": "Soft delete users" },
+  { "name": "hard-delete:users", "description": "Hard delete users" },
+
+  { "name": "read:roles", "description": "Read roles" },
+  { "name": "read:roles-details", "description": "Read role details" },
+  { "name": "add:roles", "description": "Add roles" },
+  { "name": "update:roles", "description": "Update roles" },
+  { "name": "delete:roles", "description": "Delete roles" },
+
+  { "name": "read:pages", "description": "Read pages" },
+  { "name": "read:pages-details", "description": "Read page details" },
+  { "name": "add:pages", "description": "Add pages" },
+  { "name": "update:pages", "description": "Update pages" },
+  { "name": "delete:pages", "description": "Delete pages" },
+
+  { "name": "read:permissions", "description": "Read permissions" },
+  { "name": "read:permissions-details", "description": "Read permission details" },
+  { "name": "add:permissions", "description": "Add permissions" },
+  { "name": "update:permissions", "description": "Update permissions" },
+  { "name": "delete:permissions", "description": "Delete permissions" },
+
+  { "name": "update:users-role", "description": "Update users role" },
+  { "name": "update:roles-pages", "description": "Update roles pages" },
+  { "name": "update:roles-permissions", "description": "Update roles permissions" }
+]

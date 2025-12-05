@@ -1,0 +1,37 @@
+[
+  {
+    "title": "Dashboard",
+    "slug": "dashboard",
+    "staticText": "Main dashboard page"
+  },
+  {
+    "title": "Users",
+    "slug": "dashboard/users",
+    "staticText": "Manage users"
+  },
+  {
+    "title": "Roles",
+    "slug": "dashboard/roles",
+    "staticText": "Manage roles"
+  },
+  {
+    "title": "Permissions",
+    "slug": "dashboard/permissions",
+    "staticText": "Manage permissions"
+  },
+  {
+    "title": "User Role",
+    "slug": "dashboard/users/user-role",
+    "staticText": "Assign roles to users"
+  },
+  {
+    "title": "Roles Pages",
+    "slug": "dashboard/role/roles-pages",
+    "staticText": "Assign pages to roles"
+  },
+  {
+    "title": "Role Permissions",
+    "slug": "dashboard/role/role-permissions",
+    "staticText": "Assign permissions to roles"
+  }
+]

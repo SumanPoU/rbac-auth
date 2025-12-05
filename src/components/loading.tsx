@@ -24,7 +24,7 @@ export function Loading({
 
   if (fullScreen) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center">
+      <div className="flex max-h-screen  items-center justify-center">
         {content}
       </div>
     );
