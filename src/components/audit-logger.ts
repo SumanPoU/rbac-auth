@@ -1,17 +1,41 @@
-// src/lib/auditLogger.ts
 import { db } from "@/lib/prisma";
 import winston from "winston";
 import fs from "fs";
 import path from "path";
 
-// Ensure logs directory exists
+const isVercel = process.env.NODE_PRODUCTION === "vercel";
+const isDev = process.env.NODE_PRODUCTION === "dev";
 
-const logsDir = path.join(process.cwd(), "logs");
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir, { recursive: true });
+// Transport List
+
+const transports: winston.transport[] = [];
+
+// Only allow file logging in local dev
+if (isDev) {
+  const logsDir = path.join(process.cwd(), "logs");
+
+  // Ensure logs directory (only in dev)
+  if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
+  }
+
+  transports.push(
+    new winston.transports.File({
+      filename: path.join(logsDir, "audit.log"),
+      maxsize: 5 * 1024 * 1024,
+      maxFiles: 5,
+      tailable: true,
+    })
+  );
+
+  transports.push(
+    new winston.transports.Console({
+      format: winston.format.simple(),
+    })
+  );
 }
 
-// Winston Logger (File + Console in Dev)
+// Winston Logger
 
 const auditLogger = winston.createLogger({
   level: "info",
@@ -19,17 +43,7 @@ const auditLogger = winston.createLogger({
     winston.format.timestamp(),
     winston.format.json()
   ),
-  transports: [
-    new winston.transports.File({
-      filename: path.join(logsDir, "audit.log"),
-      maxsize: 5 * 1024 * 1024, // 5MB
-      maxFiles: 5,
-      tailable: true,
-    }),
-    ...(process.env.NODE_ENV !== "production"
-      ? [new winston.transports.Console({ format: winston.format.simple() })]
-      : []),
-  ],
+  transports, // Dynamic based on environment
 });
 
 // Types
@@ -48,7 +62,7 @@ export interface AuditLogEntry {
 export async function logAuditEvent(entry: AuditLogEntry) {
   let dbError: Error | null = null;
 
-  // 1. Attempt DB Logging
+  // 1. Always log to DB (dev + vercel)
   try {
     await db.auditLog.create({
       data: {
@@ -66,27 +80,26 @@ export async function logAuditEvent(entry: AuditLogEntry) {
     console.error("Failed to write audit log to database:", error);
   }
 
-  // 2. Always write to file
-  try {
-    auditLogger.info("Audit event", {
-      ...entry,
-      timestamp: new Date().toISOString(),
-      dbError: dbError?.message ?? null,
-    });
-  } catch (error) {
-    console.error("Failed to write audit log to file:", error);
-    if (dbError) {
-      throw new Error("Audit logging failed for both DB and filesystem");
+  // 2. Log to file only in local dev
+  if (isDev) {
+    try {
+      auditLogger.info("Audit event", {
+        ...entry,
+        timestamp: new Date().toISOString(),
+        dbError: dbError?.message ?? null,
+      });
+    } catch (error) {
+      console.error("Failed to write audit log to file:", error);
     }
   }
 
-  // 3. Warning if DB logging failed
+  // 3. Warn if DB logging failed
   if (dbError) {
     console.warn("Audit event logged to file only (DB failed)");
   }
 }
 
-// Predefined actions
+// Helper
 
 export const AuditActions = {
   LOGIN: "LOGIN",
@@ -104,8 +117,6 @@ export const AuditActions = {
   PERMISSION_CHANGE: "PERMISSION_CHANGE",
   PASSWORD_CHANGE: "PASSWORD_CHANGE",
 } as const;
-
-// Helper: Extract IP + User Agent (App Router)
 
 export function getClientInfo(req: Request) {
   const forwarded = req.headers.get("x-forwarded-for");
