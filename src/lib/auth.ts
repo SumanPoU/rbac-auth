@@ -6,7 +6,6 @@ import GitHubProvider from "next-auth/providers/github";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { redirect } from "next/dist/server/api-utils";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db),
@@ -60,7 +59,14 @@ export const authOptions: NextAuthOptions = {
 
         const user = await db.user.findUnique({
           where: { email: credentials.email },
-          include: { role: true },
+          include: {
+            role: {
+              include: {
+                permissions: true,
+                pages: true,
+              },
+            },
+          },
         });
 
         // Email not found or deleted
@@ -83,7 +89,7 @@ export const authOptions: NextAuthOptions = {
           );
         }
 
-        //  soft deleted
+        // soft deleted
         if (user.isDeleted) {
           throw new Error(
             JSON.stringify({
@@ -129,7 +135,15 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           name: user.name,
           email: user.email,
+          image: user.image,
           role: user.role?.name ?? "READ_ONLY",
+          permissions: user.role?.permissions.map((p) => p.name) ?? [],
+          pages:
+            user.role?.pages.map((p) => ({
+              id: p.id,
+              title: p.title,
+              slug: p.slug,
+            })) ?? [],
         };
       },
     }),
@@ -163,8 +177,33 @@ export const authOptions: NextAuthOptions = {
 
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id.toString();
+        token.id = (user.id as number).toString();
         token.role = user.role;
+        token.permissions = (user as any).permissions ?? [];
+        token.pages = (user as any).pages ?? [];
+      } else if (token.id) {
+        // This ensures OAuth users also get permissions and pages on each token refresh
+        const dbUser = await db.user.findUnique({
+          where: { id: Number.parseInt(token.id) },
+          include: {
+            role: {
+              include: {
+                permissions: true,
+                pages: true,
+              },
+            },
+          },
+        });
+
+        if (dbUser?.role) {
+          token.role = dbUser.role.name;
+          token.permissions = dbUser.role.permissions.map((p) => p.name);
+          token.pages = dbUser.role.pages.map((p) => ({
+            id: p.id,
+            title: p.title,
+            slug: p.slug,
+          }));
+        }
       }
       return token;
     },
@@ -173,6 +212,8 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id;
         session.user.role = token.role;
+        session.user.permissions = token.permissions;
+        session.user.pages = token.pages;
       }
       return session;
     },

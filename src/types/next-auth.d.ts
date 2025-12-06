@@ -1,10 +1,11 @@
-import NextAuth, { DefaultSession } from "next-auth";
+import type { DefaultSession } from "next-auth";
 
 declare module "next-auth" {
   interface User {
     id: number;
     role: string;
     permissions?: string[];
+    pages?: Array<{ id: number; title: string; slug: string }>;
     emailVerified?: Date | null;
   }
 
@@ -13,6 +14,7 @@ declare module "next-auth" {
       id: string;
       role: string;
       permissions?: string[];
+      pages?: Array<{ id: number; title: string; slug: string }>;
     } & DefaultSession["user"];
   }
 }
@@ -22,5 +24,6 @@ declare module "next-auth/jwt" {
     id: string;
     role: string;
     permissions?: string[];
+    pages?: Array<{ id: number; title: string; slug: string }>;
   }
 }

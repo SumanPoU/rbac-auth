@@ -16,7 +16,12 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     authenticated: !!session,
-    user,
+    user: {
+      ...user,
+      role: session.user.role,
+      permissions: session.user.permissions,
+      pages: session.user.pages,
+    },
     rawSession: session,
   });
 }
