@@ -1,9 +1,9 @@
+// menu-list.ts
 import {
   Tag,
   Users,
   Settings,
   Bookmark,
-  SquarePen,
   LayoutGrid,
   LucideIcon,
 } from "lucide-react";
@@ -12,7 +12,6 @@ type Submenu = {
   href: string;
   label: string;
   permission?: string;
-  active?: boolean;
 };
 
 type Menu = {
@@ -20,17 +19,19 @@ type Menu = {
   label: string;
   icon: LucideIcon;
   permission?: string;
-  active?: boolean;
   submenus?: Submenu[];
 };
 
-type Group = {
+export type Group = {
   groupLabel: string;
   menus: Menu[];
 };
 
-export function getMenuList(pathname: string): Group[] {
-  return [
+export function getMenuList(
+  pathname: string,
+  userPermissions: string[]
+): Group[] {
+  const menuList: Group[] = [
     {
       groupLabel: "",
       menus: [
@@ -115,4 +116,33 @@ export function getMenuList(pathname: string): Group[] {
       ],
     },
   ];
+
+  // ----- Filtering logic -----
+  return menuList
+    .map((group) => {
+      const filteredMenus = group.menus
+        .map((menu) => {
+          // 1️⃣ If menu has NO submenus (like Dashboard)
+          if (!menu.submenus) {
+            if (!menu.permission) return menu;
+            return userPermissions.includes(menu.permission) ? menu : null;
+          }
+
+          // 2️⃣ If menu has submenus → filter each submenu
+          const allowedSubmenus = menu.submenus.filter((submenu) =>
+            submenu.permission
+              ? userPermissions.includes(submenu.permission)
+              : true
+          );
+
+          // Hide menu if NO submenus survive
+          if (allowedSubmenus.length === 0) return null;
+
+          return { ...menu, submenus: allowedSubmenus };
+        })
+        .filter(Boolean) as Menu[];
+
+      return { ...group, menus: filteredMenus };
+    })
+    .filter((group) => group.menus.length > 0);
 }

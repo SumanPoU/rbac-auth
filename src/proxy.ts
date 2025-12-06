@@ -28,7 +28,7 @@ export async function proxy(request: NextRequest) {
       secret: process.env.NEXTAUTH_SECRET,
     });
 
-    console.log("Middleware auth check for path:", pathname, "Token:", token);
+    // console.log("Middleware auth check for path:", pathname, "Token:", token);
 
     if (!token) {
       // Log failed authentication

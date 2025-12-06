@@ -176,15 +176,18 @@ export const authOptions: NextAuthOptions = {
     },
 
     async jwt({ token, user }) {
+      let userId = token.id as string | undefined;
+
       if (user) {
-        token.id = (user.id as number).toString();
-        token.role = user.role;
-        token.permissions = (user as any).permissions ?? [];
-        token.pages = (user as any).pages ?? [];
-      } else if (token.id) {
-        // This ensures OAuth users also get permissions and pages on each token refresh
+        // Initial sign-in - get user ID and fetch from database
+        userId = String(user.id);
+        token.id = userId;
+      }
+
+      // Fetch fresh data from database for both initial login and token refresh
+      if (userId) {
         const dbUser = await db.user.findUnique({
-          where: { id: Number.parseInt(token.id) },
+          where: { id: Number.parseInt(userId) },
           include: {
             role: {
               include: {
@@ -203,8 +206,14 @@ export const authOptions: NextAuthOptions = {
             title: p.title,
             slug: p.slug,
           }));
+        } else {
+          // No role assigned - set defaults
+          token.role = "READ_ONLY";
+          token.permissions = [];
+          token.pages = [];
         }
       }
+
       return token;
     },
 

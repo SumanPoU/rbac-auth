@@ -1,25 +1,28 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
+
 import { ContentLayout } from "@/components/dashboard/content-layout";
 import { DashboardBreadcrumb } from "@/components/dashboard/dashboard-breadcrumb";
 import { DynamicTable } from "@/components/dynamic-table";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
 import { Button } from "@/components/ui/button";
+
 import {
   Archive,
   Ban,
   Eye,
   MoreHorizontal,
   Pencil,
-  PenIcon,
   Trash,
-  User,
   UserCog,
 } from "lucide-react";
 
@@ -29,7 +32,8 @@ import UserDisableForm from "@/components/dashboard/users/user-disable-form";
 import UserDetailsDialog from "@/components/dashboard/users/user-detail-dialog";
 import DeleteDialog from "@/components/dashboard/delete-dialog";
 import UserRoleAssignDialog from "@/components/dashboard/users/user-role-assign";
-import { useRouter } from "next/navigation";
+import { useHasPermission } from "@/hooks/useHasPermission";
+import ProtectedPage from "@/components/protected-page";
 
 export default function UsersPage() {
   const breadcrumbItems = [
@@ -38,7 +42,6 @@ export default function UsersPage() {
     { label: "Users" },
   ];
 
-  // Columns for users table
   const usersColumns = [
     { accessorKey: "id", header: "ID" },
     { accessorKey: "name", header: "Name" },
@@ -71,115 +74,164 @@ export default function UsersPage() {
   const [deleteItem, setDeleteItem] = useState<any>(null);
   const [disableItem, setDisableItem] = useState<any>(null);
   const [softDeleteItem, setSoftDeleteItem] = useState<any>(null);
-  const [viewData, setviewData] = useState<any>(null);
+  const [viewData, setViewData] = useState<any>(null);
+  const [roleDialogOpen, setRoleDialogOpen] = useState<any>(null);
   const [refresh, setRefresh] = useState(0);
-  const [roleDialogOpen, setRoleDialogOpen] = useState(false);
-  const router = useRouter();
+
+  // Permissions
+  const canView = useHasPermission("read:users-details");
+  const canEdit = useHasPermission("update:users");
+  const canDisable = useHasPermission("disable:users");
+  const canSoftDelete = useHasPermission("soft-delete:users");
+  const canHardDelete = useHasPermission("hard-delete:users");
+  const canEditRole = useHasPermission("update:users-role");
+
+  const hasAnyActions =
+    canView ||
+    canEdit ||
+    canDisable ||
+    canSoftDelete ||
+    canHardDelete ||
+    canEditRole;
 
   return (
-    <ContentLayout title="Users">
-      <DashboardBreadcrumb items={breadcrumbItems} />
-      {/* View User Details Dialog */}{" "}
-      {viewData && (
-        <UserDetailsDialog
-          userId={viewData.id}
-          open={!!viewData}
-          onClose={() => setviewData(null)}
-        />
-      )}
-      {/* Edit Role Form */}
-      {editData && (
-        <UserEditForm
-          open={!!editData}
-          data={editData}
-          onClose={() => setEditData(null)}
-          onUpdated={() => setRefresh((r) => r + 1)}
-        />
-      )}
-      {disableItem && (
-        <UserDisableForm
-          open={!!disableItem}
-          data={disableItem}
-          onClose={() => setDisableItem(null)}
-          onUpdated={() => setRefresh((r) => r + 1)}
-        />
-      )}
-      {/* Soft Delete Modal */}
-      {softDeleteItem && (
-        <UserSoftDeleteForm
-          open={!!softDeleteItem}
-          data={softDeleteItem}
-          onClose={() => setSoftDeleteItem(null)}
-          onUpdated={() => setRefresh((r) => r + 1)}
-        />
-      )}
-      {/* Delete Modal */}
-      {deleteItem && (
-        <DeleteDialog
-          open={!!deleteItem}
-          setOpen={() => setDeleteItem(null)}
-          apiRoute={`/api/protected/users/${deleteItem.id}`}
-          onSuccess={() => {
-            setDeleteItem(null);
-            setRefresh((r) => r + 1);
+    <ProtectedPage permission="read:users" pageSlug="/dashboard/users">
+      <ContentLayout title="Users">
+        <DashboardBreadcrumb items={breadcrumbItems} />
+
+        {/* View User */}
+        {viewData && (
+          <UserDetailsDialog
+            userId={viewData.id}
+            open={!!viewData}
+            onClose={() => setViewData(null)}
+          />
+        )}
+
+        {/* Edit User */}
+        {editData && (
+          <UserEditForm
+            open={!!editData}
+            data={editData}
+            onClose={() => setEditData(null)}
+            onUpdated={() => setRefresh((r) => r + 1)}
+          />
+        )}
+
+        {/* Disable User */}
+        {disableItem && (
+          <UserDisableForm
+            open={!!disableItem}
+            data={disableItem}
+            onClose={() => setDisableItem(null)}
+            onUpdated={() => setRefresh((r) => r + 1)}
+          />
+        )}
+
+        {/* Soft Delete */}
+        {softDeleteItem && (
+          <UserSoftDeleteForm
+            open={!!softDeleteItem}
+            data={softDeleteItem}
+            onClose={() => setSoftDeleteItem(null)}
+            onUpdated={() => setRefresh((r) => r + 1)}
+          />
+        )}
+
+        {/* Hard Delete */}
+        {deleteItem && (
+          <DeleteDialog
+            open={!!deleteItem}
+            setOpen={() => setDeleteItem(null)}
+            apiRoute={`/api/protected/users/${deleteItem.id}`}
+            onSuccess={() => {
+              setDeleteItem(null);
+              setRefresh((r) => r + 1);
+            }}
+          />
+        )}
+
+        {/* Role Assign */}
+        {roleDialogOpen && (
+          <UserRoleAssignDialog
+            open={!!roleDialogOpen}
+            data={roleDialogOpen}
+            onClose={() => setRoleDialogOpen(null)}
+            onUpdated={() => setRefresh((r) => r + 1)}
+          />
+        )}
+
+        {/* Table */}
+        <DynamicTable
+          key={refresh}
+          endpoint="/api/protected/users"
+          columns={usersColumns}
+          ActionComponent={(item) => {
+            // If no permissions → hide action button completely
+            if (!hasAnyActions) return null;
+
+            return (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="end">
+                  {canView && (
+                    <DropdownMenuItem onClick={() => setViewData(item)}>
+                      <Eye className="w-4 h-4 mr-2" />
+                      View Details
+                    </DropdownMenuItem>
+                  )}
+
+                  {canEditRole && (
+                    <DropdownMenuItem onClick={() => setRoleDialogOpen(item)}>
+                      <UserCog className="w-4 h-4 mr-2" />
+                      Edit User Role
+                    </DropdownMenuItem>
+                  )}
+
+                  {canEdit && (
+                    <DropdownMenuItem onClick={() => setEditData(item)}>
+                      <Pencil className="w-4 h-4 mr-2" />
+                      Edit User
+                    </DropdownMenuItem>
+                  )}
+
+                  {canDisable && (
+                    <DropdownMenuItem onClick={() => setDisableItem(item)}>
+                      <Ban className="w-4 h-4 mr-2" />
+                      Disable User
+                    </DropdownMenuItem>
+                  )}
+
+                  {canSoftDelete && (
+                    <DropdownMenuItem
+                      className="text-red-600"
+                      onClick={() => setSoftDeleteItem(item)}
+                    >
+                      <Archive className="w-4 h-4 mr-2" />
+                      Soft Delete
+                    </DropdownMenuItem>
+                  )}
+
+                  {canHardDelete && (
+                    <DropdownMenuItem
+                      className="text-red-600"
+                      onClick={() => setDeleteItem(item)}
+                    >
+                      <Trash className="w-4 h-4 mr-2" />
+                      Hard Delete
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            );
           }}
         />
-      )}
-      {/* Assign Role Modal */}
-      {roleDialogOpen && (
-        <UserRoleAssignDialog
-          open={roleDialogOpen}
-          onClose={() => setRoleDialogOpen(false)}
-          data={roleDialogOpen}
-          onUpdated={() => setRefresh((r) => r + 1)}
-        />
-      )}
-      {/* Users Table */}
-      <DynamicTable
-        key={refresh}
-        endpoint="/api/protected/users"
-        columns={usersColumns}
-        ActionComponent={(item) => (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setviewData(item)}>
-                <Eye className="w-4 h-4 mr-2" /> View User Details
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setRoleDialogOpen(item)}>
-                <UserCog className="w-4 h-4 mr-2" /> Edit User Role
-              </DropdownMenuItem>
-
-              <DropdownMenuItem onClick={() => setEditData(item)}>
-                <Pencil className="w-4 h-4 mr-2" /> Edit
-              </DropdownMenuItem>
-
-              <DropdownMenuItem onClick={() => setDisableItem(item)}>
-                <Ban className="w-4 h-4 mr-2" /> Disabel
-              </DropdownMenuItem>
-
-              <DropdownMenuItem
-                onClick={() => setSoftDeleteItem(item)}
-                className="text-red-600"
-              >
-                <Archive className="w-4 h-4 mr-2" /> Soft Delete
-              </DropdownMenuItem>
-
-              <DropdownMenuItem
-                onClick={() => setDeleteItem(item)}
-                className="text-red-600"
-              >
-                <Trash className="w-4 h-4 mr-2" /> Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      />
-    </ContentLayout>
+      </ContentLayout>
+    </ProtectedPage>
   );
 }
