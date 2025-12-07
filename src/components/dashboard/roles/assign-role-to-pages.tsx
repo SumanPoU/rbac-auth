@@ -34,6 +34,7 @@ export default function AssignPagesDialog({
 }: AssignPagesDialogProps) {
   const [allPages, setAllPages] = useState<Page[]>([]);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const form = useForm({
     defaultValues: {
@@ -67,9 +68,10 @@ export default function AssignPagesDialog({
   }, [open, roleId, form]);
 
   const handleSubmit = async () => {
-    try {
-      if (!roleId) return;
+    if (!roleId) return;
 
+    try {
+      setSaving(true); // start saving
       const pageIds = form.getValues("pageIds").map(Number);
 
       const res = await fetch(`/api/protected/roles/${roleId}/pages-to-role`, {
@@ -86,6 +88,8 @@ export default function AssignPagesDialog({
       onClose();
     } catch (err: any) {
       toast.error(err.message || "Something went wrong");
+    } finally {
+      setSaving(false); // stop saving
     }
   };
 
@@ -122,10 +126,17 @@ export default function AssignPagesDialog({
             </div>
 
             <div className="flex justify-end space-x-2 mt-4">
-              <Button type="button" variant="outline" onClick={onClose}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={saving}
+              >
                 Cancel
               </Button>
-              <Button type="submit">Save</Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? "Saving..." : "Save"}
+              </Button>
             </div>
           </form>
         )}

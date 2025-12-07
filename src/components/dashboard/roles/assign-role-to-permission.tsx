@@ -33,6 +33,7 @@ export default function AssignPermissionsDialog({
 }: AssignPermissionsDialogProps) {
   const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const form = useForm({
     defaultValues: {
@@ -66,10 +67,12 @@ export default function AssignPermissionsDialog({
   }, [open, roleId, form]);
 
   const handleSubmit = async () => {
+    if (!roleId) return;
+
     try {
+      setSaving(true);
       // Convert back to numbers for backend
       const permissionIds = form.getValues("permissionIds").map(Number);
-      if (!roleId) return;
 
       const res = await fetch(
         `/api/protected/roles/${roleId}/permission-to-role`,
@@ -89,6 +92,8 @@ export default function AssignPermissionsDialog({
       onClose();
     } catch (err: any) {
       toast.error(err.message || "Something went wrong");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -127,10 +132,17 @@ export default function AssignPermissionsDialog({
             </div>
 
             <div className="flex justify-end space-x-2 mt-4">
-              <Button type="button" variant="outline" onClick={onClose}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={saving}
+              >
                 Cancel
               </Button>
-              <Button type="submit">Save</Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? "Saving..." : "Save"}
+              </Button>
             </div>
           </form>
         )}
