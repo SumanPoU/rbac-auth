@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { requirePermission } from "@/lib/require-permission";
+import { formatDate } from "@/lib/formate-date";
 
 export async function GET(
   _: Request,
@@ -49,10 +50,16 @@ export async function GET(
       { status: 404 }
     );
 
+  const formattedRole = {
+    ...role,
+    createdAt: formatDate(role.createdAt),
+    updatedAt: formatDate(role.updatedAt),
+  };
+
   return NextResponse.json({
     success: true,
     message: "Role fetched successfully",
-    data: role,
+    data: formattedRole,
   });
 }
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { Prisma } from "../../../../../generated/prisma/client";
 import { requirePermission } from "@/lib/require-permission";
+import { formatDate } from "@/lib/formate-date";
 
 export async function GET(req: Request) {
   const { allowed, response } = await requirePermission("read:roles");
@@ -52,10 +53,16 @@ export async function GET(req: Request) {
     db.role.count({ where }),
   ]);
 
+  const formattedRoles = roles.map((role) => ({
+    ...role,
+    createdAt: formatDate(role.createdAt),
+    updatedAt: formatDate(role.updatedAt),
+  }));
+
   return NextResponse.json({
     success: true,
     message: "Roles fetched successfully",
-    data: roles,
+    data: formattedRoles,
     meta: {
       total,
       page,

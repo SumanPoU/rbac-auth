@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { Prisma } from "../../../../../generated/prisma/client";
 import { requirePermission } from "@/lib/require-permission";
+import { formatDate } from "@/lib/formate-date";
 
 export async function GET(req: Request) {
   const { allowed, response } = await requirePermission("read:permissions");
@@ -46,10 +47,16 @@ export async function GET(req: Request) {
       orderBy: { id: "asc" },
     });
 
+    const formattedPermissions = permissions.map((permission) => ({
+      ...permission,
+      createdAt: formatDate(permission.createdAt),
+      updatedAt: formatDate(permission.updatedAt),
+    }));
+
     return NextResponse.json({
       success: true,
       message: "All permissions fetched successfully",
-      data: permissions,
+      data: formattedPermissions,
       meta: {
         total: permissions.length,
         page: 1,
@@ -80,10 +87,16 @@ export async function GET(req: Request) {
     db.permission.count({ where }),
   ]);
 
+  const formattedPermissions = permissions.map((permission) => ({
+    ...permission,
+    createdAt: formatDate(permission.createdAt),
+    updatedAt: formatDate(permission.updatedAt),
+  }));
+
   return NextResponse.json({
     success: true,
     message: "Permissions fetched successfully",
-    data: permissions,
+    data: formattedPermissions,
     meta: {
       total,
       page,

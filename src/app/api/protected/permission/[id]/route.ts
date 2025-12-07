@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { requirePermission } from "@/lib/require-permission";
+import { formatDate } from "@/lib/formate-date";
 
 export async function GET(
   _: Request,
@@ -31,10 +32,16 @@ export async function GET(
       { status: 404 }
     );
 
+  const formattedPermission = {
+    ...permission,
+    createdAt: formatDate(permission.createdAt),
+    updatedAt: formatDate(permission.updatedAt),
+  };
+
   return NextResponse.json({
     success: true,
     message: "Permission fetched successfully",
-    data: permission,
+    data: formattedPermission,
   });
 }
 

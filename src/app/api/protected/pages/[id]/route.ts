@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { requirePermission } from "@/lib/require-permission";
 import { checkSlugUnique } from "@/lib/check-slug";
+import { formatDate } from "@/lib/formate-date";
 
 export async function GET(
   _: Request,
@@ -31,10 +32,16 @@ export async function GET(
       { status: 404 }
     );
 
+  const formattedPage = {
+    ...page,
+    createdAt: formatDate(page.createdAt),
+    updatedAt: formatDate(page.updatedAt),
+  };
+
   return NextResponse.json({
     success: true,
     message: "Page fetched successfully",
-    data: page,
+    data: formattedPage,
   });
 }
 

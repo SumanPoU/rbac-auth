@@ -3,6 +3,7 @@ import { db } from "@/lib/prisma";
 import { Prisma } from "../../../../../generated/prisma/client";
 import { requirePermission } from "@/lib/require-permission";
 import bcrypt from "bcryptjs";
+import { formatDate } from "@/lib/formate-date";
 
 export async function GET(req: Request) {
   const { allowed, response } = await requirePermission("read:users");
@@ -64,10 +65,17 @@ export async function GET(req: Request) {
     db.user.count({ where }),
   ]);
 
+  const formattedUsers = users.map((user) => ({
+    ...user,
+    createdAt: formatDate(user.createdAt),
+    updatedAt: formatDate(user.updatedAt),
+    deletedAt: user.deletedAt ? formatDate(user.deletedAt) : null,
+  }));
+
   return NextResponse.json({
     success: true,
     message: "Users fetched successfully",
-    data: users,
+    data: formattedUsers,
     meta: {
       total,
       page,

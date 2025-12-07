@@ -3,6 +3,7 @@ import { db } from "@/lib/prisma";
 import { Prisma } from "../../../../../generated/prisma/client";
 import { requirePermission } from "@/lib/require-permission";
 import { checkSlugUnique } from "@/lib/check-slug";
+import { formatDate } from "@/lib/formate-date";
 
 export async function GET(req: Request) {
   const { allowed, response } = await requirePermission("read:pages");
@@ -54,11 +55,16 @@ export async function GET(req: Request) {
       },
       orderBy: { id: "asc" },
     });
+    const formattedPages = pages.map((page) => ({
+      ...page,
+      createdAt: formatDate(page.createdAt),
+      updatedAt: formatDate(page.updatedAt),
+    }));
 
     return NextResponse.json({
       success: true,
       message: "All pages fetched successfully",
-      data: pages,
+      data: formattedPages,
       meta: {
         total: pages.length,
         page: 1,
@@ -88,10 +94,16 @@ export async function GET(req: Request) {
     db.page.count({ where }),
   ]);
 
+  const formattedPages = pages.map((page) => ({
+    ...page,
+    createdAt: formatDate(page.createdAt),
+    updatedAt: formatDate(page.updatedAt),
+  }));
+
   return NextResponse.json({
     success: true,
     message: "Pages fetched successfully",
-    data: pages,
+    data: formattedPages,
     meta: {
       total,
       page,

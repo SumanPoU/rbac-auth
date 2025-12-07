@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { requirePermission } from "@/lib/require-permission";
+import { formatDate } from "@/lib/formate-date";
 
 export async function GET(
   _: Request,
@@ -56,11 +57,17 @@ export async function GET(
       { success: false, message: "User not found" },
       { status: 404 }
     );
+  const formattedUser = {
+    ...user,
+    createdAt: formatDate(user.createdAt),
+    updatedAt: formatDate(user.updatedAt),
+    deletedAt: user.deletedAt ? formatDate(user.deletedAt) : null,
+  };
 
   return NextResponse.json({
     success: true,
     message: "User fetched successfully",
-    data: user,
+    data: formattedUser,
   });
 }
 
